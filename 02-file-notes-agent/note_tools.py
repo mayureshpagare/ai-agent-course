@@ -90,3 +90,46 @@ def search_notes(keyword):
             f"{note_id}: {content} (Created at: {created_at})"
         )
     return "\n".join(notes)
+
+def count_note():
+    """
+    Count the total number of saved notes in the database.
+
+    Returns:
+        The total count of saved notes.
+    """
+    connection = get_connection()
+    cursor = connection.cursor()
+    cursor.execute('''
+        SELECT COUNT(*) FROM notes
+    ''')
+    count = cursor.fetchone()[0]
+    connection.close()
+    return count
+
+def update_note(note_id, new_content):
+    """
+    Update the content of a saved note using its ID.
+
+    Args:
+        note_id: The numeric ID of the note to update.
+        new_content: The new content to replace the existing note content.
+
+    Returns:
+        Information about whether the note was updated.
+    """
+    connection = get_connection()
+    cursor = connection.cursor()
+    cursor.execute('''
+        UPDATE notes
+        SET content = ?
+        WHERE id = ?
+    ''', (new_content, note_id))
+    connection.commit()
+    updated_count = cursor.rowcount
+    connection.close()
+
+    if updated_count == 0:
+        return f"No note found with ID {note_id}."
+
+    return f"Note with ID {note_id} updated."

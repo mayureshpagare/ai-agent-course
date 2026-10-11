@@ -1,0 +1,7 @@
+Project: Local AI Course
+
+Database:
+PostgreSQL
+
+Port:
+5433
