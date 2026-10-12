@@ -1,8 +1,10 @@
 from agent import run_agent
-from config import SYSTEM_PROMPT
+from config import MODEL, SYSTEM_PROMPT
 from database import initialize_database
+from ollama_setup import ensure_ollama
 
 def main():
+    ensure_ollama(MODEL)
     initialize_database()  # Ensure the database is initialized before starting the agent 
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
