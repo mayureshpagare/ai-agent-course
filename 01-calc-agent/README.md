@@ -13,16 +13,34 @@ and result before presenting its final answer.
 - Conversation history across prompts
 - Friendly handling of tool errors such as division by zero
 - A 10-round safety limit to prevent accidental infinite tool loops
+- Starts the Ollama server automatically if it is not already running
 
 ## Requirements
 
 - Python 3.10 or newer
-- [Ollama](https://ollama.com/) installed and running
-- The `qwen3.5:9b` model available locally
+- [Ollama](https://ollama.com/)
+- The `qwen3.5:9b` model
+
+`setup.sh` installs Ollama and the model for you if they are missing.
 
 ## Setup
 
-From the `01-calc-agent` directory, create and activate a virtual environment:
+### Quick setup
+
+From the `01-calc-agent` directory (on Windows, use Git Bash):
+
+```bash
+./setup.sh
+```
+
+The script installs Ollama, starts the server, downloads `qwen3.5:9b`,
+creates a `.venv` virtual environment, and installs `requirements.txt`. Steps
+that are already done are skipped, so it is safe to re-run. To use a
+different model, run `MODEL=other:tag ./setup.sh`.
+
+### Manual setup
+
+Create and activate a virtual environment:
 
 ```powershell
 python -m venv .venv
@@ -41,13 +59,15 @@ Download the model used by the agent:
 ollama pull qwen3.5:9b
 ```
 
-Make sure Ollama is running before starting the program.
-
 ## Run the agent
 
 ```powershell
 python agent.py
 ```
+
+On startup, the agent checks that the Ollama server is reachable. If it is
+not, the agent launches `ollama serve` in the background and pulls the model
+if it is missing. You do not need to run `ollama run` first.
 
 Then enter a calculation at the prompt:
 
@@ -58,6 +78,18 @@ You: What is 15% of 240, then add 12 to the result?
 The program prints the tools selected by the model, their arguments and
 results, followed by the agent's final explanation. Enter `exit` or `quit` to
 end the session.
+
+## How it works
+
+1. The user's message is added to the conversation history.
+2. The history and the tool list are sent to the model.
+3. If the model requests tool calls, each one is run through `TOOL_REGISTRY`
+   and its result (or error message) is appended to the history.
+4. Steps 2 and 3 repeat until the model replies without tool calls, or until
+   `MAX_TOOL_ROUNDS` is reached.
+
+Tool errors are returned to the model as text instead of crashing the
+program, so the model can correct its arguments and try again.
 
 ## Available tools
 
@@ -74,11 +106,13 @@ end the session.
 
 ```text
 01-calc-agent/
-|-- agent.py          # Interactive agent and tool-calling loop
+|-- agent.py          # Interactive agent and multi-step tool-calling loop
 |-- tools.py          # Calculator tool implementations
-|-- main.py           # Minimal Ollama chat example
+|-- ollama_setup.py   # Starts the Ollama server and pulls the model if needed
+|-- setup.sh          # One-shot installer for Ollama, the model, and Python deps
+|-- main.py           # Minimal Ollama chat example (no tools)
 |-- test1.py          # Earlier single-round agent experiment
-|-- test2.py          # Multi-step agent experiment
+|-- test2.py          # Multi-step agent experiment (precursor to agent.py)
 `-- requirements.txt  # Pinned Python dependencies
 ```
 
@@ -91,5 +125,10 @@ MODEL = "qwen3.5:9b"
 MAX_TOOL_ROUNDS = 10
 ```
 
-Although `tools.py` contains additional percentage-related helper functions,
-only the six tools listed above are currently registered with the agent.
+## Future scope
+
+- Register the additional percentage and tax tools already drafted in
+  `tools.py`: discounted price, percentage difference, percentage of total,
+  percentage change, and GST
+- More operations such as square roots, rounding, and averages
+- Stronger input validation and error handling for tool arguments
