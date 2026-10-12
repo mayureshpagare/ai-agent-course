@@ -1,0 +1,8 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.env
+
+# Local agent data (databases, notes)
+**/data/
