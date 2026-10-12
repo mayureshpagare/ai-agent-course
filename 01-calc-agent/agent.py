@@ -2,6 +2,7 @@
 
 from ollama import chat
 
+from ollama_setup import ensure_ollama
 from tools import add, divide, multiply, percentage, power, subtract
 
 
@@ -87,6 +88,7 @@ def run_agent(user_input: str, messages: list) -> None:
 
 def main() -> None:
     """Run the interactive calculator while preserving conversation history."""
+    ensure_ollama(MODEL)
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
 
     while True:
