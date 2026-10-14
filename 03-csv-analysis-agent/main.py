@@ -1,4 +1,8 @@
-from csv_tools import inspect_csv
+from csv_tools import *
 
-
-print(inspect_csv("issues.csv"))
+print(
+    count_by_column(
+        "issues.csv",
+        "module"
+    )
+)
