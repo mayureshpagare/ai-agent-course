@@ -9,7 +9,13 @@ next time you start it.
 
 - Persistent notes stored in SQLite (`data/notes.db`)
 - Save, list, search, and delete notes through natural language
-- List directory contents, read UTF-8 text files, and inspect file metadata
+- Note categories (for example `database`, `docker`, `learning`)
+- Duplicate detection: saving the same note twice returns the existing ID
+- List directory contents, find files by name in subfolders, read UTF-8 text
+  files (with a size limit), and inspect file metadata
+- Structured (JSON) tool results
+- Input validation in the tools, and a confirmation prompt before deleting
+  all notes
 - Multi-step tool calling, for example reading a file and then saving a note
   about it
 - Conversation history across prompts
@@ -108,17 +114,20 @@ note unless the user asks.
 
 | Tool | Operation |
 | --- | --- |
-| `save_note(content)` | Saves a new note and returns its ID |
-| `list_notes()` | Lists all notes with their IDs and creation times |
+| `save_note(content, category)` | Saves a new note (category defaults to `general`); if identical content exists, returns that note's ID instead |
+| `list_notes()` | Lists all notes with their IDs, categories, and creation times |
 | `search_notes(keyword)` | Finds notes whose content contains the keyword |
+| `get_notes_by_category(category)` | Lists the notes in one category |
 | `delete_note(note_id)` | Deletes the note with the given ID |
+| `delete_all_notes()` | Deletes every note, only after you type `yes` at the approval prompt |
 
 ### File tools (`file_tools.py`)
 
 | Tool | Operation |
 | --- | --- |
 | `list_files(directory)` | Lists files and folders in a directory (defaults to `.`) |
-| `read_file(file_path)` | Returns the contents of a UTF-8 text file |
+| `find_files(directory, filename)` | Searches a folder and its subfolders for a file name (wildcards allowed); skips `.git`, `.venv`, `__pycache__`, `node_modules`; returns at most 100 matches |
+| `read_file(file_path, max_characters)` | Returns up to `max_characters` (default 10,000, capped at 50,000) of a UTF-8 text file without loading the rest, and reports whether it was truncated |
 | `get_file_info(file_path)` | Returns a file's extension, size, folder, and last-modified time |
 
 ## Database
@@ -129,10 +138,25 @@ note unless the user asks.
 | --- | --- | --- |
 | `id` | `INTEGER` | Primary key, auto-incremented |
 | `content` | `TEXT` | The note text |
+| `category` | `TEXT` | Topic label, lowercase; defaults to `general` |
 | `created_at` | `TIMESTAMP` | Defaults to the current time (UTC) |
 
 The `data/` folder is listed in `.gitignore`, so your notes are never
-committed. A fresh clone starts with an empty database.
+committed. A fresh clone starts with an empty database. An existing database
+created before categories were added gets the `category` column on the next
+start, and its old notes are put in `general`.
+
+## Tool results and validation
+
+Every tool returns a dictionary or a list of dictionaries, for example
+`{"status": "saved", "id": 3, "content": "...", "category": "docker"}` or
+`{"error": "Invalid note ID: -5. Note IDs are positive integers."}`.
+`agent.py` converts them to JSON before sending them back to the model.
+
+Inputs are checked in Python rather than left to the model: missing files,
+folders passed where a file is expected, non-positive or non-numeric note IDs,
+empty search keywords, empty notes, and oversized read limits all return an
+`error` result instead of running.
 
 ## Project structure
 
@@ -171,6 +195,12 @@ DATABASE_PATH = DATA_DIRECTORY / "notes.db"
 
 - File tools are read-only; the agent cannot modify or delete files on disk.
 - Notes are deleted only when the user explicitly asks.
+- `delete_all_notes` is listed in `CONFIRMATION_REQUIRED` in `agent.py`. Before
+  it runs, the program asks you to type `yes`; any other answer cancels it and
+  tells the model nothing was changed. Reads and single-note deletes run
+  without a prompt.
+- File reads are limited to 50,000 characters, so a very large file cannot
+  fill memory or the conversation.
 - File tools read from the paths you give them, so avoid asking the agent to
   open sensitive files.
 
@@ -180,4 +210,18 @@ DATABASE_PATH = DATA_DIRECTORY / "notes.db"
   and updating an existing note
 - Restrict file tools to an allowed folder
 - A limit on tool-call rounds, as in the calculator agent
-- Stronger error and exception handling around tool calls
+
+## Tool selection exercise
+
+Before sending each prompt, predict which tool the model will call, then
+compare with the `Calling tool:` line the program prints.
+
+| Prompt | Expected tool |
+| --- | --- |
+| Remember that Redis runs on port 6379. | `save_note` (category such as `database` or `redis`) |
+| What do you remember about Redis? | `search_notes("Redis")` |
+| List everything you've stored. | `list_notes` |
+| Delete the Redis note. | `search_notes` to find the ID, then `delete_note` |
+| What's inside sample.txt? | `read_file` |
+| How big is sample.txt? | `get_file_info` |
+| What files are here? | `list_files` |
