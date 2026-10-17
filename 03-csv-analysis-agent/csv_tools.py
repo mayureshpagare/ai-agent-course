@@ -360,3 +360,73 @@ def summarize_numeric_column(
         "minimum": float(numeric.min()),
         "maximum": float(numeric.max()),
     }
+
+def summarize_by_group(
+        file_name: str,
+        group_column: str,
+        numeric_column: str
+) -> list[dict]:
+    """
+    Group rows by one column and summarize a numeric column.
+
+    Args:
+        file_name: CSV file to analyze.
+        group_column: Column used for grouping.
+        numeric_column: Numeric column to summarize.
+
+    Returns:
+        Per-group row count, sum and average.
+    """
+
+    df = load_csv(file_name)
+
+    if group_column not in df.columns:
+        raise ValueError(
+            f"Column does not exist: {group_column}"
+        )
+
+    if numeric_column not in df.columns:
+        raise ValueError(
+            f"Column does not exist: {numeric_column}"
+        )
+
+    df[numeric_column] = pd.to_numeric(df[numeric_column], errors="coerce")
+
+    grouped = (
+        df.groupby(group_column)[numeric_column]
+        .agg(count="count",total="sum",average="mean")
+        .reset_index()
+    )
+
+    return grouped.to_dict(orient="records")
+
+def search_text(file_name:str, query: str, limit:int = 20) -> list[dict]:
+    """
+    Search for a text query in all string columns of a CSV file.
+
+    Args:
+        file_name (str): The name of the CSV file to search.
+        query (str): The text query to search for.
+        limit (int): The maximum number of rows to return. Default is 20.
+
+    Returns:
+        Matching Rows.
+    """
+    df = load_csv(file_name)
+    query = query.lower()
+
+    mask = df.apply(
+        lambda row: row.astype(str)
+        .str.lower()
+        .str.contains(
+            query,regex = False
+        )
+        .any(),
+        axis =1,
+    )
+
+    results = df[mask]
+
+    return results.head(
+        min(limit, 50)
+    ).to_dict(orient="records")
