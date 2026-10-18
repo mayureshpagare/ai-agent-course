@@ -6,3 +6,7 @@ __pycache__/
 
 # Local agent data (databases, notes)
 **/data/
+
+# Agent UI frontend
+node_modules/
+dist/
