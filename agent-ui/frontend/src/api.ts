@@ -3,6 +3,8 @@ export interface Agent {
   name: string;
   description: string;
   model: string;
+  /** URL of the agent's logo, or null to show its initial. */
+  logo: string | null;
 }
 
 export interface Conversation {
@@ -38,11 +40,32 @@ export type StreamEvent =
   | { type: "final"; content: string }
   | { type: "error"; message: string };
 
+export interface AuthStatus {
+  required: boolean;
+  authorized: boolean;
+  /** True in the browser on the host computer itself. */
+  local: boolean;
+}
+
+export interface RemoteInfo {
+  enabled: boolean;
+  urls: string[];
+  qr: string | null;
+}
+
+/** Fired when the server rejects a request because this device isn't signed in. */
+export const UNAUTHORIZED_EVENT = "agent-ui:unauthorized";
+
+function checkSignedIn(response: Response) {
+  if (response.status === 401) window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
     headers: { "Content-Type": "application/json" },
     ...init,
   });
+  checkSignedIn(response);
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
     throw new Error(body.detail ?? `${response.status} ${response.statusText}`);
@@ -51,9 +74,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  auth: () => request<AuthStatus>("/api/auth"),
+  login: (token: string) => request("/api/login", { method: "POST", body: JSON.stringify({ token }) }),
+  remote: () => request<RemoteInfo>("/api/remote"),
   agents: () => request<Agent[]>("/api/agents"),
-  conversations: (agentId: string) =>
-    request<Conversation[]>(`/api/conversations?agent_id=${encodeURIComponent(agentId)}`),
+  conversations: () => request<Conversation[]>("/api/conversations"),
   createConversation: (agentId: string) =>
     request<Conversation>("/api/conversations", {
       method: "POST",
@@ -84,6 +109,7 @@ export async function streamMessage(
     body: JSON.stringify({ content }),
     signal,
   });
+  checkSignedIn(response);
   if (!response.ok || !response.body) {
     const body = await response.json().catch(() => ({}));
     throw new Error(body.detail ?? `${response.status} ${response.statusText}`);

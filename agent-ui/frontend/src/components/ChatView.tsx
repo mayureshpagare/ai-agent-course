@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { Agent, ChatItem } from "../api";
 import ActivityGroup, { type ActivityStep } from "./ActivityGroup";
+import Avatar from "./Avatar";
 import Message from "./Message";
 
 interface Props {
@@ -41,7 +42,7 @@ export default function ChatView({ agent, items, busy, status, onDecide }: Props
     return (
       <div className="chat-scroll">
         <div className="empty-state">
-          <div className="avatar large">{agent?.name.charAt(0) ?? "?"}</div>
+          <Avatar agent={agent} size="large" />
           <h1>{agent ? agent.name : "Pick an agent"}</h1>
           <p>{agent?.description}</p>
         </div>
@@ -68,7 +69,7 @@ export default function ChatView({ agent, items, busy, status, onDecide }: Props
               key={block.key}
               kind={block.item.kind}
               content={block.item.content}
-              agentInitial={agent?.name.charAt(0)}
+              agent={agent}
             />
           ),
         )}

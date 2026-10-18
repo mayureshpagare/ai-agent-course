@@ -1,16 +1,17 @@
 import { useState } from "react";
 import type { Agent, Conversation } from "../api";
+import Avatar from "./Avatar";
 
 interface Props {
   agents: Agent[];
-  agentId: string | null;
-  onSelectAgent: (id: string) => void;
   conversations: Conversation[];
   conversationId: string | null;
   onOpen: (id: string) => void;
   onNewChat: () => void;
   onRename: (id: string, title: string) => void;
   onDelete: (id: string) => void;
+  /** Set only on the host computer: opens the phone pairing QR code. */
+  onConnectPhone?: () => void;
   busy: boolean;
 }
 
@@ -23,31 +24,13 @@ export default function Sidebar(props: Props) {
     setEditingId(null);
   };
 
+  const agentName = (id: string) => props.agents.find((a) => a.id === id)?.name ?? id;
+
   return (
     <aside className="sidebar">
       <button className="new-chat" onClick={props.onNewChat} disabled={props.busy}>
         <span>＋</span> New chat
       </button>
-
-      <div className="sidebar-section">
-        <div className="sidebar-label">Agents</div>
-        {props.agents.length === 0 && <div className="sidebar-empty">No agents found</div>}
-        {props.agents.map((agent) => (
-          <button
-            key={agent.id}
-            className={`agent-row ${agent.id === props.agentId ? "active" : ""}`}
-            onClick={() => props.onSelectAgent(agent.id)}
-            disabled={props.busy && agent.id !== props.agentId}
-            title={agent.description}
-          >
-            <span className="avatar">{agent.name.charAt(0)}</span>
-            <span className="agent-text">
-              <span className="agent-name">{agent.name}</span>
-              <span className="agent-desc">{agent.description}</span>
-            </span>
-          </button>
-        ))}
-      </div>
 
       <div className="sidebar-section grow">
         <div className="sidebar-label">Chats</div>
@@ -68,8 +51,17 @@ export default function Sidebar(props: Props) {
               />
             ) : (
               <>
-                <button className="chat-title" onClick={() => props.onOpen(c.id)} title={c.title}>
-                  {c.title}
+                <button
+                  className="chat-title"
+                  onClick={() => props.onOpen(c.id)}
+                  title={`${c.title} (${agentName(c.agent_id)})`}
+                >
+                  <Avatar
+                    agent={props.agents.find((a) => a.id === c.agent_id)}
+                    size="small"
+                    fallback={c.agent_id.charAt(0).toUpperCase()}
+                  />
+                  <span className="chat-title-text">{c.title}</span>
                 </button>
                 <span className="chat-actions">
                   <button
@@ -95,6 +87,12 @@ export default function Sidebar(props: Props) {
           </div>
         ))}
       </div>
+
+      {props.onConnectPhone && (
+        <button className="connect-phone" onClick={props.onConnectPhone}>
+          <span>📱</span> Use on your phone
+        </button>
+      )}
     </aside>
   );
 }

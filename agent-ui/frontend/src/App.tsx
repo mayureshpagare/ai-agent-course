@@ -1,5 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api, streamMessage, type Agent, type ChatItem, type Conversation, type StreamEvent } from "./api";
+import {
+  api,
+  streamMessage,
+  UNAUTHORIZED_EVENT,
+  type Agent,
+  type AuthStatus,
+  type ChatItem,
+  type Conversation,
+  type StreamEvent,
+} from "./api";
+import AgentPicker from "./components/AgentPicker";
+import Avatar from "./components/Avatar";
+import ConnectPhone from "./components/ConnectPhone";
+import Login from "./components/Login";
 import Sidebar from "./components/Sidebar";
 import ChatView from "./components/ChatView";
 import Composer from "./components/Composer";
@@ -15,6 +28,30 @@ function loadSavedAgent(): string | null {
 }
 
 export default function App() {
+  const [auth, setAuth] = useState<AuthStatus | null>(null);
+
+  const checkAuth = useCallback(() => {
+    api
+      .auth()
+      .then(setAuth)
+      // Old backend without /api/auth, or unreachable: let the chat UI report it.
+      .catch(() => setAuth({ required: false, authorized: true, local: true }));
+  }, []);
+
+  useEffect(() => {
+    checkAuth();
+    const signedOut = () => setAuth((current) => current && { ...current, authorized: false });
+    window.addEventListener(UNAUTHORIZED_EVENT, signedOut);
+    return () => window.removeEventListener(UNAUTHORIZED_EVENT, signedOut);
+  }, [checkAuth]);
+
+  if (!auth) return null;
+  if (!auth.authorized) return <Login onSignedIn={checkAuth} />;
+  return <ChatApp local={auth.local} />;
+}
+
+function ChatApp({ local }: { local: boolean }) {
+  const [connectOpen, setConnectOpen] = useState(false);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [agentId, setAgentId] = useState<string | null>(loadSavedAgent);
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -40,27 +77,33 @@ export default function App() {
       .catch((error) => setLoadError(`Could not reach the backend: ${error.message}`));
   }, []);
 
-  const refreshConversations = useCallback(async (id: string) => {
-    setConversations(await api.conversations(id));
+  // The history lists every chat, whichever agent it belongs to.
+  const refreshConversations = useCallback(async () => {
+    setConversations(await api.conversations());
   }, []);
 
   useEffect(() => {
-    if (!agentId) return;
+    refreshConversations().catch(() => setConversations([]));
+  }, [refreshConversations]);
+
+  /** Pick the agent for a new chat. Remembered as the default for next time. */
+  const selectAgent = (id: string) => {
+    if (busy || conversationId) return;
+    setAgentId(id);
     try {
-      localStorage.setItem(AGENT_KEY, agentId);
+      localStorage.setItem(AGENT_KEY, id);
     } catch {
       /* storage unavailable: selection just won't be remembered */
     }
-    setConversationId(null);
-    setItems([]);
-    refreshConversations(agentId).catch(() => setConversations([]));
-  }, [agentId, refreshConversations]);
+  };
 
   const openConversation = async (id: string) => {
     if (busy) return;
     setSidebarOpen(false);
     setConversationId(id);
     const data = await api.conversation(id);
+    // Each chat is bound to the agent it was started with.
+    setAgentId(data.agent_id);
     setItems(data.items);
   };
 
@@ -69,6 +112,11 @@ export default function App() {
     setConversationId(null);
     setItems([]);
     setSidebarOpen(false);
+    // Keep the agent of the chat you were in, unless that agent no longer exists.
+    if (!agents.some((a) => a.id === agentId)) {
+      const saved = loadSavedAgent();
+      setAgentId(agents.some((a) => a.id === saved) ? saved : agents[0]?.id ?? null);
+    }
   };
 
   const updateTool = (callId: string, patch: Partial<Extract<ChatItem, { kind: "tool" }>>) =>
@@ -144,7 +192,7 @@ export default function App() {
       setItems((prev) =>
         prev.map((item) => (item.kind === "tool" && item.status !== "done" ? { ...item, status: "done" } : item)),
       );
-      refreshConversations(agentId).catch(() => undefined);
+      refreshConversations().catch(() => undefined);
     }
   };
 
@@ -162,13 +210,13 @@ export default function App() {
 
   const rename = async (id: string, title: string) => {
     await api.rename(id, title);
-    if (agentId) refreshConversations(agentId);
+    refreshConversations();
   };
 
   const remove = async (id: string) => {
     await api.remove(id);
     if (id === conversationId) newChat();
-    if (agentId) refreshConversations(agentId);
+    refreshConversations();
   };
 
   const isNewChat = items.length === 0 && !busy;
@@ -189,26 +237,28 @@ export default function App() {
     <div className={`app ${sidebarOpen ? "sidebar-open" : ""}`}>
       <Sidebar
         agents={agents}
-        agentId={agentId}
-        onSelectAgent={(id) => !busy && setAgentId(id)}
         conversations={conversations}
         conversationId={conversationId}
         onOpen={openConversation}
         onNewChat={newChat}
         onRename={rename}
         onDelete={remove}
+        onConnectPhone={local ? () => setConnectOpen(true) : undefined}
         busy={busy}
       />
+      {connectOpen && <ConnectPhone onClose={() => setConnectOpen(false)} />}
       <div className="scrim" onClick={() => setSidebarOpen(false)} />
       <main className="main">
         <header className="topbar">
           <button className="icon-button menu-button" onClick={() => setSidebarOpen(true)} aria-label="Open sidebar">
             ☰
           </button>
-          <div className="topbar-title">
-            <span>{agent?.name ?? "No agent"}</span>
-            {agent?.model && <span className="badge">{agent.model}</span>}
-          </div>
+          <AgentPicker
+            agents={agents}
+            agentId={agentId}
+            locked={conversationId !== null || busy}
+            onSelect={selectAgent}
+          />
         </header>
         {loadError ? (
           <>
@@ -222,7 +272,7 @@ export default function App() {
           // New chat: greeting and a large input box, centred together.
           <div className="new-chat-view">
             <div className="empty-state">
-              <div className="avatar large">{agent?.name.charAt(0) ?? "?"}</div>
+              <Avatar agent={agent} size="large" />
               <h1>{agent ? agent.name : "Pick an agent"}</h1>
               <p>{agent?.description}</p>
             </div>

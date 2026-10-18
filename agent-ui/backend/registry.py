@@ -11,6 +11,9 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 ENTRY_FILE = "ui_entry.py"
+# Agent logos: agent-ui/logos/<agent folder name>.<ext> (see logos/README.md).
+LOGO_DIR = REPO_ROOT / "agent-ui" / "logos"
+LOGO_EXTENSIONS = (".svg", ".png", ".webp", ".jpg", ".jpeg")  # first match wins
 
 
 @dataclass
@@ -30,9 +33,20 @@ class AgentInfo:
                 return str(candidate)
         return sys.executable
 
+    @property
+    def logo(self) -> Path | None:
+        for extension in LOGO_EXTENSIONS:
+            candidate = LOGO_DIR / f"{self.id}{extension}"
+            if candidate.is_file():
+                return candidate
+        return None
+
     def to_json(self) -> dict:
+        logo = self.logo
+        # The version query makes browsers reload a logo after you replace the file.
+        logo_url = f"/api/agents/{self.id}/logo?v={int(logo.stat().st_mtime)}" if logo else None
         return {"id": self.id, "name": self.name,
-                "description": self.description, "model": self.model}
+                "description": self.description, "model": self.model, "logo": logo_url}
 
 
 def _string_constants(path: Path) -> dict:

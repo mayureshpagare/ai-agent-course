@@ -195,12 +195,26 @@ button:disabled {
 .chat-title {
   flex: 1;
   min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   text-align: left;
   padding: 7px 8px;
   font-size: 14px;
+}
+
+.chat-title-text {
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.avatar.small {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  font-size: 11px;
 }
 
 .chat-actions {
@@ -270,6 +284,65 @@ button:disabled {
   background: var(--bg-input);
   border-radius: 999px;
   padding: 2px 8px;
+}
+
+/* ---------- Agent picker (top bar) ---------- */
+.agent-picker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.agent-picker-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-weight: 600;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.agent-picker-button:hover:not(.locked) {
+  background: var(--bg-hover);
+}
+
+.agent-picker-button.locked {
+  cursor: default;
+}
+
+.chevron {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.agent-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 30;
+  width: min(340px, calc(100vw - 32px));
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.agent-menu .agent-text {
+  flex: 1;
+}
+
+.check {
+  color: var(--text-muted);
+  font-size: 14px;
+  padding-right: 4px;
 }
 
 .menu-button {
@@ -740,4 +813,241 @@ button:disabled {
   .message.assistant .avatar {
     display: none;
   }
+}
+
+/* ---------- Phone / remote access ---------- */
+.connect-phone {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.connect-phone:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgb(0 0 0 / 0.45);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.modal {
+  width: 100%;
+  max-width: 400px;
+  max-height: 100%;
+  overflow-y: auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px 20px 20px;
+  box-shadow: var(--shadow);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.modal p {
+  margin: 10px 0;
+}
+
+.modal details {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.modal-code,
+.modal-url {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 13px;
+  word-break: break-all;
+}
+
+.modal-code {
+  background: var(--bg-input);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.modal-url {
+  padding: 4px 0;
+}
+
+/* QR codes need dark-on-light to scan, whatever the theme. */
+.qr {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 8px;
+  width: 240px;
+  margin: 8px auto;
+}
+
+.qr svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.small {
+  font-size: 12px;
+}
+
+.login-screen {
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.login-card h1 {
+  margin: 4px 0 0;
+  font-size: 22px;
+}
+
+.login-card p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.login-card code {
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.login-input,
+.login-button {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 16px;
+}
+
+.login-input {
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text);
+  outline: none;
+}
+
+.login-input:focus {
+  border-color: var(--accent);
+}
+
+.login-button {
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+.login-error {
+  color: var(--danger);
+  font-size: 14px;
+}
+
+/* Full-screen phone layout: fit the visible viewport and stay clear of notches. */
+@supports (height: 100dvh) {
+  .app {
+    height: 100dvh;
+  }
+}
+
+.topbar {
+  padding-top: max(10px, env(safe-area-inset-top));
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+}
+
+.composer-wrap {
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+.sidebar {
+  padding-top: max(12px, env(safe-area-inset-top));
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+/* Touch screens have no hover: keep chat actions visible and buttons finger-sized. */
+@media (hover: none) {
+  .chat-actions {
+    display: flex;
+  }
+
+  .icon-button {
+    padding: 8px 10px;
+  }
+
+  .chat-title {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+}
+
+@media (max-width: 760px) {
+  /* iOS zooms into inputs with text smaller than 16px. */
+  .composer textarea,
+  .rename-input {
+    font-size: 16px;
+  }
+
+  .sidebar {
+    width: min(300px, 85vw);
+  }
+
+  .menu-button {
+    padding: 8px 10px;
+  }
+
+  .composer-hint {
+    display: none;
+  }
+
+  .new-chat-view {
+    padding-bottom: 2vh;
+  }
+}
+
+/* Agent logo (agent-ui/logos/) in place of the initial: clipped to the same rounded square. */
+.avatar.has-logo {
+  background: transparent;
+  overflow: hidden;
+}
+
+.avatar.has-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }

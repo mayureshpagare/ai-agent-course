@@ -3,17 +3,19 @@
 Run from agent-ui/backend:  .venv\\Scripts\\python -m uvicorn app:app --port 8000
 """
 
+import asyncio
 import json
 from collections import deque
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 import history
+import remote
 from registry import discover_agents
 from workers import AgentWorker, WorkerError, WorkerPool
 
@@ -27,11 +29,26 @@ stopped_turns: set[str] = set()
 
 @asynccontextmanager
 async def lifespan(_app):
+    if remote.ENABLED:
+        remote.print_banner()
     yield
     pool.shutdown()
 
 
-app = FastAPI(title="Agent UI", lifespan=lifespan)
+PUBLIC_PATHS = {"/api/auth", "/api/login"}
+COOKIE_MAX_AGE = 365 * 24 * 3600
+
+
+def require_auth(request: Request):
+    if request.url.path not in PUBLIC_PATHS and not remote.is_authorized(request):
+        raise HTTPException(401, "Not signed in.")
+
+
+app = FastAPI(title="Agent UI", lifespan=lifespan, dependencies=[Depends(require_auth)])
+
+
+class Login(BaseModel):
+    token: str
 
 
 class NewConversation(BaseModel):
@@ -90,9 +107,57 @@ def to_display(messages: list[dict]) -> list[dict]:
     return items
 
 
+def signed_in(response):
+    response.set_cookie(remote.COOKIE, remote.TOKEN, max_age=COOKIE_MAX_AGE,
+                        httponly=True, samesite="lax")
+    return response
+
+
+@app.get("/api/auth")
+def auth_status(request: Request):
+    return {"required": remote.ENABLED, "authorized": remote.is_authorized(request),
+            "local": remote.is_local(request)}
+
+
+@app.post("/api/login")
+async def login(body: Login):
+    if not remote.token_matches(body.token.strip()):
+        await asyncio.sleep(1)  # slow down guessing
+        raise HTTPException(401, "Wrong access token.")
+    return signed_in(JSONResponse({"ok": True}))
+
+
+@app.get("/api/login")
+async def login_link(token: str = ""):
+    """Target of the QR code: sign in and open the app."""
+    if not remote.token_matches(token):
+        await asyncio.sleep(1)
+        return RedirectResponse("/?login=failed", status_code=303)
+    return signed_in(RedirectResponse("/", status_code=303))
+
+
+@app.get("/api/remote")
+def remote_info(request: Request):
+    """Phone-pairing details, shown only to the browser on this computer."""
+    if not remote.is_local(request):
+        raise HTTPException(403, "Only available on the host computer.")
+    urls = remote.login_urls() if remote.ENABLED else []
+    return {"enabled": remote.ENABLED, "urls": urls, "qr": remote.qr_svg(urls[0]) if urls else None}
+
+
 @app.get("/api/agents")
 def list_agents():
     return [agent.to_json() for agent in discover_agents().values()]
+
+
+@app.get("/api/agents/{agent_id}/logo")
+def agent_logo(agent_id: str):
+    logo = get_agent(agent_id).logo
+    if logo is None:
+        raise HTTPException(404, "This agent has no logo.")
+    # Logos are only shown via <img>, but an SVG opened directly could run scripts: forbid that.
+    return FileResponse(logo, headers={"Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'",
+                                       "Cache-Control": "public, max-age=31536000, immutable"})
 
 
 @app.get("/api/conversations")

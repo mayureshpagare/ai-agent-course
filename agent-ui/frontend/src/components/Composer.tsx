@@ -10,6 +10,8 @@ interface Props {
   onStop: () => void;
 }
 
+const isTouch = window.matchMedia("(pointer: coarse)").matches;
+
 export default function Composer({ disabled, busy, agentName, centered = false, onSend, onStop }: Props) {
   const [text, setText] = useState("");
   const ref = useRef<HTMLTextAreaElement>(null);
@@ -35,12 +37,14 @@ export default function Composer({ disabled, busy, agentName, centered = false, 
           ref={ref}
           rows={centered ? 3 : 1}
           value={text}
-          autoFocus={centered}
+          // Don't pop the keyboard open on phones before you ask for it.
+          autoFocus={centered && !isTouch}
           placeholder={centered ? `Ask ${agentName} anything...` : `Message ${agentName}`}
           disabled={disabled}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+            // On touch screens Enter adds a new line; the send button sends.
+            if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing && !isTouch) {
               e.preventDefault();
               submit();
             }
