@@ -9,6 +9,8 @@ and result before presenting its final answer.
 
 - Tool-based arithmetic instead of model-generated calculations
 - Addition, subtraction, multiplication, division, powers, and percentages
+- Discounts, GST, percentage of total, percentage change, and percentage
+  difference
 - Multi-step tool calling for compound problems
 - Conversation history across prompts
 - Friendly handling of tool errors such as division by zero
@@ -101,6 +103,15 @@ program, so the model can correct its arguments and try again.
 | `divide(a, b)` | Divides `a` by `b` and rejects a zero divisor |
 | `power(a, b)` | Raises `a` to the power of `b` |
 | `percentage(value, percent)` | Calculates a percentage of a value |
+| `discounted_price(original_price, discount_percent)` | Price after a percentage discount |
+| `calculate_percentage_difference(value1, value2)` | Percentage difference between two values |
+| `calculate_percentage_of_total(part, total)` | What percentage `part` is of `total` |
+| `calculate_percentage_change(original, new)` | Percentage change from `original` to `new` |
+| `calculate_percentage_increase_or_decrease(original, new)` | Percentage increase (positive) or decrease (negative) |
+| `gst(amount, gst_rate)` | GST on an amount at a given rate |
+
+`agent.py` registers every public function in `tools.py` automatically, so a
+new tool only needs to be written there with a clear docstring.
 
 ## Project structure
 
@@ -127,8 +138,5 @@ MAX_TOOL_ROUNDS = 10
 
 ## Future scope
 
-- Register the additional percentage and tax tools already drafted in
-  `tools.py`: discounted price, percentage difference, percentage of total,
-  percentage change, and GST
 - More operations such as square roots, rounding, and averages
 - Stronger input validation and error handling for tool arguments
