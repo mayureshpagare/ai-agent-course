@@ -4,11 +4,13 @@ interface Props {
   disabled: boolean;
   busy: boolean;
   agentName: string;
+  /** New chat: a larger rectangular box shown in the middle of the screen. */
+  centered?: boolean;
   onSend: (text: string) => void;
   onStop: () => void;
 }
 
-export default function Composer({ disabled, busy, agentName, onSend, onStop }: Props) {
+export default function Composer({ disabled, busy, agentName, centered = false, onSend, onStop }: Props) {
   const [text, setText] = useState("");
   const ref = useRef<HTMLTextAreaElement>(null);
 
@@ -27,13 +29,14 @@ export default function Composer({ disabled, busy, agentName, onSend, onStop }: 
   };
 
   return (
-    <div className="composer-wrap">
-      <div className="composer">
+    <div className={`composer-wrap ${centered ? "centered" : ""}`}>
+      <div className={`composer ${centered ? "centered" : ""}`}>
         <textarea
           ref={ref}
-          rows={1}
+          rows={centered ? 3 : 1}
           value={text}
-          placeholder={`Message ${agentName}`}
+          autoFocus={centered}
+          placeholder={centered ? `Ask ${agentName} anything...` : `Message ${agentName}`}
           disabled={disabled}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {

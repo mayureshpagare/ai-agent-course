@@ -171,6 +171,20 @@ export default function App() {
     if (agentId) refreshConversations(agentId);
   };
 
+  const isNewChat = items.length === 0 && !busy;
+  const composer = (
+    <Composer
+      // Remount on switching layouts so the large box gets focus.
+      key={isNewChat ? "centered" : "docked"}
+      centered={isNewChat && !loadError}
+      disabled={!agent}
+      busy={busy}
+      onSend={send}
+      onStop={stop}
+      agentName={agent?.name ?? "agent"}
+    />
+  );
+
   return (
     <div className={`app ${sidebarOpen ? "sidebar-open" : ""}`}>
       <Sidebar
@@ -197,14 +211,29 @@ export default function App() {
           </div>
         </header>
         {loadError ? (
-          <div className="empty-state">
-            <h1>Backend not reachable</h1>
-            <p>{loadError}</p>
+          <>
+            <div className="empty-state">
+              <h1>Backend not reachable</h1>
+              <p>{loadError}</p>
+            </div>
+            {composer}
+          </>
+        ) : isNewChat ? (
+          // New chat: greeting and a large input box, centred together.
+          <div className="new-chat-view">
+            <div className="empty-state">
+              <div className="avatar large">{agent?.name.charAt(0) ?? "?"}</div>
+              <h1>{agent ? agent.name : "Pick an agent"}</h1>
+              <p>{agent?.description}</p>
+            </div>
+            {composer}
           </div>
         ) : (
-          <ChatView agent={agent} items={items} busy={busy} status={status} onDecide={decide} />
+          <>
+            <ChatView agent={agent} items={items} busy={busy} status={status} onDecide={decide} />
+            {composer}
+          </>
         )}
-        <Composer disabled={!agent} busy={busy} onSend={send} onStop={stop} agentName={agent?.name ?? "agent"} />
       </main>
     </div>
   );
