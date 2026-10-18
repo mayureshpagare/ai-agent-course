@@ -117,11 +117,12 @@ new tool only needs to be written there with a clear docstring.
 
 ```text
 01-calc-agent/
-|-- agent.py          # Interactive agent and multi-step tool-calling loop
+|-- main.py           # Entry point: startup checks and interactive chat loop
+|-- agent.py          # Tool registry and multi-step tool-calling loop
+|-- config.py         # Model name, round limit, and system prompt
 |-- tools.py          # Calculator tool implementations
 |-- ollama_setup.py   # Starts the Ollama server and pulls the model if needed
 |-- setup.sh          # One-shot installer for Ollama, the model, and Python deps
-|-- main.py           # Entry point: runs the calculator agent
 |-- test1.py          # Earlier single-round agent experiment
 |-- test2.py          # Multi-step agent experiment (precursor to agent.py)
 `-- requirements.txt  # Pinned Python dependencies
@@ -129,7 +130,7 @@ new tool only needs to be written there with a clear docstring.
 
 ## Configuration
 
-The model and maximum number of tool-call rounds can be changed in `agent.py`:
+The model, maximum number of tool-call rounds, and system prompt live in `config.py`:
 
 ```python
 MODEL = "qwen3.5:9b"
