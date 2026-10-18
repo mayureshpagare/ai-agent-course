@@ -64,7 +64,7 @@ ollama pull qwen3.5:9b
 ## Run the agent
 
 ```powershell
-python agent.py
+python main.py
 ```
 
 On startup, the agent checks that the Ollama server is reachable. If it is
@@ -121,7 +121,7 @@ new tool only needs to be written there with a clear docstring.
 |-- tools.py          # Calculator tool implementations
 |-- ollama_setup.py   # Starts the Ollama server and pulls the model if needed
 |-- setup.sh          # One-shot installer for Ollama, the model, and Python deps
-|-- main.py           # Minimal Ollama chat example (no tools)
+|-- main.py           # Entry point: runs the calculator agent
 |-- test1.py          # Earlier single-round agent experiment
 |-- test2.py          # Multi-step agent experiment (precursor to agent.py)
 `-- requirements.txt  # Pinned Python dependencies

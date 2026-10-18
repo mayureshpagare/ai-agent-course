@@ -86,6 +86,9 @@ export default function App() {
           prev.map((c) => (c.id === conversationIdRef.current ? { ...c, title: event.title } : c)),
         );
         break;
+      case "thinking":
+        setItems((prev) => [...prev, { kind: "thinking", content: event.content }]);
+        break;
       case "tool_call":
         setStatus(`Running ${event.name}...`);
         setItems((prev) => [

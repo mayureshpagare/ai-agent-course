@@ -73,8 +73,12 @@ def to_display(messages: list[dict]) -> list[dict]:
         if role == "user":
             items.append({"kind": "user", "content": message.get("content", "")})
         elif role == "assistant":
+            if (message.get("thinking") or "").strip():
+                items.append({"kind": "thinking", "content": message["thinking"]})
             if (message.get("content") or "").strip():
-                items.append({"kind": "assistant", "content": message["content"]})
+                # Text written alongside tool calls is intermediate reasoning, not the answer.
+                kind = "thinking" if message.get("tool_calls") else "assistant"
+                items.append({"kind": kind, "content": message["content"]})
             for n, call in enumerate(message.get("tool_calls") or []):
                 function = call.get("function", {})
                 card = {"kind": "tool", "id": f"h{index}-{n}", "name": function.get("name"),

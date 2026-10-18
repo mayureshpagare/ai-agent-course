@@ -17,6 +17,7 @@ export type ToolStatus = "running" | "approval" | "done";
 
 export type ChatItem =
   | { kind: "user" | "assistant" | "error"; content: string }
+  | { kind: "thinking"; content: string }
   | {
       kind: "tool";
       id: string;
@@ -30,6 +31,7 @@ export type ChatItem =
 export type StreamEvent =
   | { type: "status"; message: string }
   | { type: "title"; title: string }
+  | { type: "thinking"; content: string }
   | { type: "tool_call"; call_id: string; name: string; args: Record<string, unknown> }
   | { type: "approval_required"; call_id: string; name: string; args: Record<string, unknown>; warning: string }
   | { type: "tool_result"; call_id: string; name: string; content: string }

@@ -78,6 +78,11 @@ def run_chat(entry, messages):
         new_messages.append(message)
 
         tool_calls = response.message.tool_calls or []
+        # Reasoning, and any text written alongside tool calls, is shown as "thinking".
+        if (response.message.thinking or "").strip():
+            emit("thinking", content=response.message.thinking)
+        if tool_calls and (response.message.content or "").strip():
+            emit("thinking", content=response.message.content)
         if not tool_calls:
             emit("final", content=response.message.content or "", new_messages=new_messages)
             return

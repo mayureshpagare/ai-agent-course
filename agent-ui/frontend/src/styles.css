@@ -398,8 +398,8 @@ button:disabled {
   color: var(--accent);
 }
 
-/* ---------- Tool cards ---------- */
-.tool-card {
+/* ---------- Activity (thinking + tool calls) ---------- */
+.activity {
   margin-left: 40px;
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -407,11 +407,11 @@ button:disabled {
   overflow: hidden;
 }
 
-.tool-card.approval {
+.activity.needs-approval {
   border-color: var(--danger);
 }
 
-.tool-header {
+.activity-header {
   width: 100%;
   display: flex;
   align-items: center;
@@ -421,8 +421,66 @@ button:disabled {
   color: var(--text-muted);
 }
 
-.tool-header:hover {
+.activity-header:hover {
   background: var(--bg-hover);
+}
+
+.activity-title {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.activity-steps {
+  list-style: none;
+  margin: 0;
+  padding: 4px 12px 12px 34px;
+  border-top: 1px solid var(--border);
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.step {
+  position: relative;
+  padding: 8px 0;
+}
+
+.step + .step {
+  border-top: 1px dashed var(--border);
+}
+
+.step.thinking {
+  color: var(--text-muted);
+  font-style: italic;
+  white-space: pre-wrap;
+}
+
+.step-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  margin-left: -22px;
+}
+
+.step-result {
+  margin: 6px 0 0;
+  background: var(--bg-input);
+  border-radius: 8px;
+  padding: 8px 10px;
+  max-height: 200px;
+  overflow: auto;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.step .approval {
+  margin-top: 8px;
+  border-radius: 8px;
+  border-top: none;
 }
 
 .tool-icon {
@@ -638,7 +696,7 @@ button:disabled {
     background: rgb(0 0 0 / 0.4);
   }
 
-  .tool-card,
+  .activity,
   .status-line {
     margin-left: 0;
   }
