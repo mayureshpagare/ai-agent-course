@@ -5,7 +5,7 @@ interface Props {
   onSignedIn: () => void;
 }
 
-/** Shown on other devices (e.g. your phone) when the server runs with `run_ui.ps1 -Remote`. */
+/** Shown on other devices (e.g. your phone) until they sign in with the access token. */
 export default function Login({ onSignedIn }: Props) {
   const linkFailed = new URLSearchParams(location.search).get("login") === "failed";
   const [token, setToken] = useState("");
@@ -34,7 +34,7 @@ export default function Login({ onSignedIn }: Props) {
         <div className="avatar large">🔒</div>
         <h1>Sign in to your agents</h1>
         <p>
-          Scan the QR code printed by <code>run_ui.ps1 -Remote</code> on your computer, or paste the access token
+          Scan the QR code printed by <code>run_ui.ps1</code> on your computer, or paste the access token
           from <code>agent-ui/backend/data/remote_token.txt</code>.
         </p>
         <input

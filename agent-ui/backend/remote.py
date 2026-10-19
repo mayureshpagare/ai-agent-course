@@ -1,6 +1,6 @@
 """Remote access: use the UI from your phone (or any device) on the same network.
 
-Enabled by `run_ui.ps1 -Remote`, which sets AGENT_UI_REMOTE=1 and binds to 0.0.0.0.
+On by default with `run_ui.ps1` (turn it off with -LocalOnly), which sets AGENT_UI_REMOTE=1.
 Every /api request from another device must then carry the access token, either
 as the cookie set by /api/login or as an `Authorization: Bearer <token>` header.
 The token is generated once and kept in data/remote_token.txt (or set
@@ -21,9 +21,8 @@ import qrcode.image.svg
 COOKIE = "agent_ui_token"
 TOKEN_FILE = Path(__file__).resolve().parent / "data" / "remote_token.txt"
 LOCAL_HOSTS = {"127.0.0.1", "::1", "localhost"}
-# A reverse proxy (e.g. `tailscale serve`) makes every request look local, so
-# forwarded requests never get the localhost exemption.
-FORWARD_HEADERS = ("x-forwarded-for", "forwarded", "x-real-ip")
+# Proxies that don't say who the client is: requests through them never count as local.
+OPAQUE_PROXY_HEADERS = ("forwarded", "x-real-ip")
 
 ENABLED = os.environ.get("AGENT_UI_REMOTE") == "1" or bool(os.environ.get("AGENT_UI_TOKEN"))
 PORT = int(os.environ.get("AGENT_UI_PORT", "8000"))
@@ -47,9 +46,23 @@ def token_matches(candidate: str | None) -> bool:
     return bool(TOKEN and candidate) and hmac.compare_digest(candidate.encode(), TOKEN.encode())
 
 
+def _normalize(ip: str) -> str:
+    ip = ip.strip().strip("[]")
+    return ip.removeprefix("::ffff:")  # IPv4-mapped IPv6, as some proxies report it
+
+
 def is_local(request) -> bool:
-    host = request.client.host if request.client else ""
-    return host in LOCAL_HOSTS and not any(h in request.headers for h in FORWARD_HEADERS)
+    """True for the browser on this computer itself.
+
+    A local proxy (Vite in dev mode, `tailscale serve`) makes every request look
+    local, so when one forwards a request we judge by the client it reports: the
+    last X-Forwarded-For entry, which is the one that proxy added itself.
+    """
+    peer = _normalize(request.client.host if request.client else "")
+    if peer not in LOCAL_HOSTS or any(h in request.headers for h in OPAQUE_PROXY_HEADERS):
+        return False
+    forwarded_for = request.headers.get("x-forwarded-for")
+    return forwarded_for is None or _normalize(forwarded_for.split(",")[-1]) in LOCAL_HOSTS
 
 
 def is_authorized(request) -> bool:

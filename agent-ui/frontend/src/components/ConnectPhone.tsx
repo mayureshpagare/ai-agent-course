@@ -33,8 +33,8 @@ export default function ConnectPhone({ onClose }: Props) {
         {!info && !error && <p className="muted">Loading...</p>}
         {info && !info.enabled && (
           <>
-            <p>Remote access is off. Restart the UI with:</p>
-            <pre className="modal-code">.\run_ui.ps1 -Remote</pre>
+            <p>Remote access is off. Restart the UI without -LocalOnly:</p>
+            <pre className="modal-code">.\run_ui.ps1</pre>
             <p className="muted">Then open this dialog again to get a QR code for your phone.</p>
           </>
         )}

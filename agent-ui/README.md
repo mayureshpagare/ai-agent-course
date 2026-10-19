@@ -7,19 +7,16 @@ This is a chat interface in the style of ChatGPT or Claude for every agent in th
 From the repo root:
 
 ```powershell
-.\run_ui.ps1          # dev mode: http://localhost:5173 (hot reload)
-.\run_ui.ps1 -Prod    # build once and serve everything from http://localhost:8000
+.\run_ui.ps1             # dev mode: http://localhost:5173 (hot reload)
+.\run_ui.ps1 -Prod       # build once and serve everything from http://localhost:8000 (optional: -Port 8080)
+.\run_ui.ps1 -LocalOnly  # either mode, but not reachable from other devices
 ```
 
 The first run creates `agent-ui/backend/.venv` and installs the npm packages. Ollama must be installed, and each agent's own `.venv` must exist, just as it does for running `main.py`.
 
 ## Use it from your phone
 
-```powershell
-.\run_ui.ps1 -Remote            # optional: -Port 8080
-```
-
-This builds the UI and serves it on your local network. The terminal prints a sign-in link and a QR code. You can also click **Use on your phone** at the bottom of the sidebar on the computer to show the same QR code.
+Phone access is on in both modes unless you pass `-LocalOnly`. At startup the terminal prints a sign-in link and a QR code. You can also click **Use on your phone** at the bottom of the sidebar on the computer to show the same QR code. Phones use port 5173 in dev mode and port 8000 with `-Prod`.
 
 1. Connect your phone to the same Wi-Fi as the computer.
 2. Scan the QR code with the phone's camera. This signs the phone in for a year and opens the chat.
@@ -31,7 +28,7 @@ Security:
 - Traffic is plain HTTP, so only use this on networks you trust.
 - To use it **away from home**, install [Tailscale](https://tailscale.com) on the computer and the phone. The computer's `100.x.y.z` Tailscale address then works from anywhere, and the connection is encrypted. Don't port-forward 8000 on your router.
 
-If the phone can't connect, Windows Firewall is probably blocking the port. The launcher prints the one-line `New-NetFirewallRule` command that allows it.
+The first time you use a port, the launcher asks for admin rights once, to allow that port through Windows Firewall (for Private networks only). If you decline, it prints the `New-NetFirewallRule` command to run yourself. If the phone still can't connect, check that your Wi-Fi is set to **Private** in Windows network settings.
 
 ## How it works
 
