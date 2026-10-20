@@ -7,6 +7,7 @@ import 'package:agent_ui_mobile/data/models/chat_item.dart';
 import 'package:agent_ui_mobile/domain/chat_controller.dart';
 import 'package:agent_ui_mobile/domain/logo_loader.dart';
 import 'package:agent_ui_mobile/features/chat/widgets/agent_picker.dart';
+import 'package:agent_ui_mobile/features/chat/widgets/message_widgets.dart';
 import 'package:agent_ui_mobile/features/settings/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -66,7 +67,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(harness.backend.calls, contains('get:c2'));
     expect(find.byType(Drawer), findsNothing);
-    expect(find.text('assistant: 3'), findsOneWidget);
+    expect(find.byType(AssistantMessage), findsOneWidget);
   });
 
   testWidgets('long-press, Rename saves the new title', (tester) async {
@@ -141,9 +142,10 @@ void main() {
     await harness.pumpApp(tester);
     harness.backend.failWith = null;
     await openDrawer(tester);
-    expect(find.text('Retry'), findsOneWidget);
+    final drawerRetry = find.descendant(of: find.byType(Drawer), matching: find.text('Retry'));
+    expect(drawerRetry, findsOneWidget);
     harness.backend.seed('Back online');
-    await tester.tap(find.text('Retry'));
+    await tester.tap(drawerRetry);
     await tester.pumpAndSettle();
     expect(find.text('Back online'), findsOneWidget);
   });

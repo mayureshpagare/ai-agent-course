@@ -286,9 +286,11 @@ class ChatController extends Notifier<ChatState> {
         // Dropping the connection below stops the turn anyway.
       }
     }
-    await _subscription?.cancel();
+    // End the turn now; closing the connection can take a moment and
+    // shouldn't keep the stop button spinning.
     final done = _turnDone;
     if (done != null && !done.isCompleted) done.completeError(const _Stopped());
+    unawaited(_subscription?.cancel());
   }
 
   /// Approves or denies the tool call [callId].
