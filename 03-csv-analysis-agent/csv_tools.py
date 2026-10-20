@@ -430,3 +430,54 @@ def search_text(file_name:str, query: str, limit:int = 20) -> list[dict]:
     return results.head(
         min(limit, 50)
     ).to_dict(orient="records")
+
+def count_by_column_filtered(
+    file_name: str,
+    filter_column: str,
+    filter_value: str,
+    group_column: str,
+) -> dict:
+    """
+    Filter rows first, then count values in another column.
+
+    Args:
+        file_name: CSV file to analyze.
+        filter_column: Column used for filtering.
+        filter_value: Required filter value.
+        group_column: Column whose values should be counted.
+
+    Returns:
+        Counts grouped by the requested column after filtering.
+    """
+
+    df = load_csv(file_name)
+
+    for column in [
+        filter_column,
+        group_column,
+    ]:
+
+        if column not in df.columns:
+
+            raise ValueError(
+                f"Column does not exist: {column}"
+            )
+
+    mask = (
+        df[filter_column]
+        .astype(str)
+        .str.lower()
+        == str(filter_value).lower()
+    )
+
+    filtered = df[mask]
+
+    counts = (
+        filtered[group_column]
+        .fillna("NULL")
+        .astype(str)
+        .value_counts()
+        .to_dict()
+    )
+
+    return counts
