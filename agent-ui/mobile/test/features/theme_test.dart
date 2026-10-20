@@ -45,7 +45,7 @@ void main() {
   });
 
   for (final brightness in Brightness.values) {
-    for (final screen in ['pairing', 'settings']) {
+    for (final screen in ['pairing', 'chat', 'drawer', 'settings']) {
       testWidgets('$screen fits a 320dp screen at 2x text in ${brightness.name} mode', (tester) async {
         tester.view.physicalSize = const Size(320, 640);
         tester.view.devicePixelRatio = 1;
@@ -54,15 +54,24 @@ void main() {
         addTearDown(tester.view.reset);
         addTearDown(tester.platformDispatcher.clearAllTestValues);
 
-        final harness = await Harness.create(signedIn: screen == 'settings');
+        final harness = await Harness.create(signedIn: screen != 'pairing');
+        harness.backend.seed('A chat with a fairly long title that has to be cut off');
         await harness.pumpApp(tester);
         if (screen == 'settings') {
-          await tester.tap(find.byTooltip('Settings'));
+          await tester.tap(find.byTooltip('Open chats'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('Settings'));
           await tester.pumpAndSettle();
           expect(find.byType(SettingsScreen), findsOneWidget);
           expect(find.text('Connected'), findsOneWidget);
           await tester.scrollUntilVisible(find.text('0.1.0 (1)'), 200);
           expect(find.text('0.1.0 (1)'), findsOneWidget);
+        } else if (screen == 'drawer') {
+          await tester.tap(find.byTooltip('Open chats'));
+          await tester.pumpAndSettle();
+          expect(find.textContaining('fairly long title'), findsOneWidget);
+        } else if (screen == 'chat') {
+          expect(find.byKey(const Key('agent-title')), findsOneWidget);
         } else {
           expect(find.byType(PairingScreen), findsOneWidget);
         }

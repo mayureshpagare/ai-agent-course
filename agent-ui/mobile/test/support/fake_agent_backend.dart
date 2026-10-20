@@ -84,7 +84,7 @@ class FakeAgentBackend implements AgentBackend {
   }
 
   @override
-  Uri? logoUrl(Agent agent) => null;
+  Uri? logoUrl(Agent agent) => agent.logo == null ? null : Uri.parse('http://fake.local${agent.logo}');
 
   @override
   Map<String, String> get authHeaders => {'Authorization': 'Bearer $token'};

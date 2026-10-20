@@ -1,44 +1,80 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../app.dart';
 import '../../core/theme/tokens.dart';
-import '../../domain/agents_controller.dart';
-import '../../domain/session_controller.dart';
+import '../../data/models/chat_item.dart';
+import '../../domain/chat_controller.dart';
+import '../../domain/conversations_controller.dart';
+import '../conversations/conversations_drawer.dart';
+import '../shared/agent_avatar.dart';
+import 'widgets/agent_picker.dart';
 
-/// Temporary home screen until the chat UI lands: shows that pairing worked
-/// and which agents the server offers.
+/// The main screen: top bar, chat history drawer and the open chat.
 class ChatScreen extends ConsumerWidget {
   const ChatScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final session = ref.watch(sessionProvider);
-    final agents = ref.watch(agentsProvider);
+    final busy = ref.watch(chatControllerProvider.select((chat) => chat.busy));
+    // Load the chat list now, not when the drawer first opens, so it is ready
+    // and a connection problem shows up straight away.
+    ref.listen(conversationsProvider, (_, _) {});
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Agent UI'),
+        leading: Builder(
+          builder: (context) => IconButton(
+            tooltip: 'Open chats',
+            icon: const Icon(Icons.menu_rounded),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
+        title: const AgentTitleButton(),
         actions: [
           IconButton(
-            tooltip: 'Settings',
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () => context.push(Routes.settings),
+            key: const Key('top-new-chat'),
+            tooltip: 'New chat',
+            icon: const Icon(Icons.edit_square),
+            onPressed: busy ? null : () => ref.read(chatControllerProvider.notifier).newChat(),
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          if (session is SignedIn) Text('Connected to ${session.profile.label}'),
-          const SizedBox(height: 16),
-          ...switch (agents) {
-            AsyncData(:final value) => [for (final agent in value) ListTile(title: Text(agent.name))],
-            AsyncError(:final error) => [Text('$error', style: TextStyle(color: context.palette.error))],
-            _ => [const Center(child: CircularProgressIndicator())],
-          },
-        ],
-      ),
+      drawer: const ConversationsDrawer(),
+      body: const _ChatBody(),
+    );
+  }
+}
+
+/// Temporary body until the message list and composer land (milestone 4).
+class _ChatBody extends ConsumerWidget {
+  const _ChatBody();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final chat = ref.watch(chatControllerProvider);
+    final agent = ref.watch(currentAgentProvider);
+    if (chat.loading) return const Center(child: CircularProgressIndicator());
+    if (chat.items.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AgentAvatar(agent: agent, size: 56),
+            const SizedBox(height: 16),
+            Text(agent?.name ?? 'Pick an agent', style: Theme.of(context).textTheme.displaySmall),
+          ],
+        ),
+      );
+    }
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        for (final item in chat.items)
+          Text(switch (item) {
+            MessageItem(:final kind, :final content) => '$kind: $content',
+            ThinkingItem(:final content) => 'thinking: $content',
+            ToolItem(:final name) => 'tool: $name',
+          }, style: TextStyle(color: context.palette.text)),
+      ],
     );
   }
 }
