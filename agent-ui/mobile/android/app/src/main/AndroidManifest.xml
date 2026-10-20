@@ -1,7 +1,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Talk to the Agent UI backend on the local network. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Scan the pairing QR code. Optional: pairing also works by typing the address. -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
     <application
-        android:label="agent_ui_mobile"
+        android:label="Agent UI"
         android:name="${applicationName}"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

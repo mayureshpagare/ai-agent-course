@@ -79,19 +79,21 @@ class ChatState {
 final chatControllerProvider = NotifierProvider<ChatController, ChatState>(ChatController.new);
 
 /// The agent shown in the top bar and used for the next new chat.
-///
-/// For an open chat this is the chat's own agent, or null if that agent no
-/// longer exists. For a new chat it is the selected agent, falling back to the
-/// first one when the saved choice is gone.
-final currentAgentProvider = Provider<Agent?>((ref) {
-  final agents = ref.watch(agentsProvider).value ?? const <Agent>[];
-  final selected = ref.watch(selectedAgentProvider);
-  final hasConversation = ref.watch(chatControllerProvider.select((chat) => chat.conversationId != null));
+final currentAgentProvider = Provider<Agent?>((ref) => resolveAgent(
+      ref.watch(agentsProvider).value ?? const [],
+      ref.watch(selectedAgentProvider),
+      hasConversation: ref.watch(chatControllerProvider.select((chat) => chat.conversationId != null)),
+    ));
+
+/// For an open chat: the chat's own agent, or null if it no longer exists.
+/// For a new chat: the selected agent, falling back to the first one when
+/// the saved choice is gone.
+Agent? resolveAgent(List<Agent> agents, String? selected, {required bool hasConversation}) {
   for (final agent in agents) {
     if (agent.id == selected) return agent;
   }
   return hasConversation || agents.isEmpty ? null : agents.first;
-});
+}
 
 /// Runs chat turns: the Flutter version of the state machine in `App.tsx`.
 class ChatController extends Notifier<ChatState> {
@@ -99,21 +101,27 @@ class ChatController extends Notifier<ChatState> {
   Completer<void>? _turnDone;
   bool _stopping = false;
   bool _foreground = true;
+  bool _keepingAwake = false;
   bool _backgroundedDuringTurn = false;
   String? _pendingRecovery;
 
   @override
   ChatState build() {
     ref.watch(backendProvider); // a new sign-in starts from a fresh chat
+    final devices = ref.read(deviceServicesProvider);
     ref.onDispose(() {
       unawaited(_subscription?.cancel());
-      if (stateOrNull?.busy ?? false) ref.read(deviceServicesProvider).setKeepAwake(false);
+      if (_keepingAwake) devices.setKeepAwake(false);
     });
     return const ChatState();
   }
 
+  /// False once this controller is disposed or the app signed out (for
+  /// example after a 401): then late results of an old turn are dropped.
+  bool get _live => ref.mounted && ref.read(sessionProvider) is SignedIn;
+
   void _set(ChatState Function(ChatState current) change) {
-    if (ref.mounted) state = change(state);
+    if (_live) state = change(state);
   }
 
   void _append(ChatItem item) => _set((s) => s.copyWith(items: [...s.items, item]));
@@ -138,11 +146,11 @@ class ChatController extends Notifier<ChatState> {
     state = ChatState(conversationId: id, loading: true);
     try {
       final detail = await ref.read(backendProvider).conversation(id);
-      if (!ref.mounted || state.conversationId != id) return;
+      if (!_live || state.conversationId != id) return;
       ref.read(selectedAgentProvider.notifier).follow(detail.conversation.agentId);
       state = ChatState(conversationId: id, items: detail.items);
     } on BackendException catch (error) {
-      if (!ref.mounted || state.conversationId != id) return;
+      if (!_live || state.conversationId != id) return;
       state = ChatState(conversationId: id, loadError: error.message);
     }
   }
@@ -164,7 +172,11 @@ class ChatController extends Notifier<ChatState> {
   /// applies the streamed events until the turn ends.
   Future<void> send(String text) async {
     final content = text.trim();
-    final agent = ref.read(currentAgentProvider);
+    final agent = resolveAgent(
+      ref.read(agentsProvider).value ?? const [],
+      ref.read(selectedAgentProvider),
+      hasConversation: state.conversationId != null,
+    );
     if (content.isEmpty || state.busy || agent == null) return;
 
     final backend = ref.read(backendProvider);
@@ -173,7 +185,7 @@ class ChatController extends Notifier<ChatState> {
     _backgroundedDuringTurn = !_foreground;
     _pendingRecovery = null;
     state = state.copyWith(busy: true, status: thinkingStatus, notice: null);
-    devices.setKeepAwake(true);
+    devices.setKeepAwake(_keepingAwake = true);
 
     var id = state.conversationId;
     Object? failure;
@@ -182,7 +194,7 @@ class ChatController extends Notifier<ChatState> {
         final created = await backend.createConversation(agent.id);
         id = created.id;
         _set((s) => s.copyWith(conversationId: created.id));
-        if (ref.mounted) ref.read(conversationsProvider.notifier).insert(created);
+        if (_live) ref.read(conversationsProvider.notifier).insert(created);
       }
       if (_stopping) throw const _Stopped();
       _append(UserItem(content));
@@ -190,11 +202,11 @@ class ChatController extends Notifier<ChatState> {
     } on Object catch (error) {
       failure = error;
     } finally {
-      devices.setKeepAwake(false);
+      devices.setKeepAwake(_keepingAwake = false);
       _subscription = null;
       _turnDone = null;
     }
-    if (!ref.mounted) return;
+    if (!_live) return;
 
     final interrupted = failure is UnreachableException && _backgroundedDuringTurn;
     state = state.copyWith(
@@ -302,10 +314,10 @@ class ChatController extends Notifier<ChatState> {
   Future<void> _recover() async {
     final id = _pendingRecovery;
     _pendingRecovery = null;
-    if (id == null || !ref.mounted || state.conversationId != id || state.busy) return;
+    if (id == null || !_live || state.conversationId != id || state.busy) return;
     try {
       final detail = await ref.read(backendProvider).conversation(id);
-      if (!ref.mounted || state.conversationId != id || state.busy) return;
+      if (!_live || state.conversationId != id || state.busy) return;
       state = state.copyWith(items: detail.items, notice: interruptedNotice);
     } on BackendException catch (error) {
       _set((s) => s.copyWith(

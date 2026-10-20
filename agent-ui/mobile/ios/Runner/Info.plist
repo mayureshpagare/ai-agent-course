@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Agent Ui Mobile</string>
+	<string>Agent UI</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -26,6 +26,19 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<!-- The Agent UI backend on your Wi-Fi uses plain HTTP at a local IP address.
+		     NSAllowsLocalNetworking permits that for local addresses only; it does not
+		     allow plain HTTP to the internet. Remove when the app is HTTPS-only
+		     (see docs/FUTURE_REMOTE.md). -->
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Agent UI connects to the computer on your Wi-Fi that runs your agents.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Agent UI uses the camera to scan the QR code that pairs this phone with your computer.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

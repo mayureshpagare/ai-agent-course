@@ -74,22 +74,26 @@ final backendProvider = Provider<AgentBackend>((ref) {
 class SessionController extends Notifier<SessionState> {
   SettingsStore get _store => ref.read(settingsStoreProvider);
 
+  /// The signed-in backend, kept here because `onDispose` may not read [state].
+  AgentBackend? _backend;
+
   @override
   SessionState build() {
-    ref.onDispose(() => _closeBackend(state));
+    ref.onDispose(() => _backend?.close());
     unawaited(_restore());
     return const SessionLoading();
   }
 
   Future<void> _restore() async {
+    await Future<void>.value(); // let build() return before the state changes
     final profile = _store.activeProfile();
     final credential = profile == null ? null : await _store.credential(profile.id);
     if (!ref.mounted) return;
     // Opening the app again skips pairing; a stale token is caught by the
     // first request's 401.
-    state = profile != null && credential != null
+    _replace(profile != null && credential != null
         ? SignedIn(profile, _connect(profile, credential))
-        : SignedOut(lastAddress: profile?.baseUrl);
+        : SignedOut(lastAddress: profile?.baseUrl));
   }
 
   AgentBackend _connect(ConnectionProfile profile, String credential) => AuthGuardedBackend(
@@ -148,12 +152,9 @@ class SessionController extends Notifier<SessionState> {
   }
 
   void _replace(SessionState next) {
-    final previous = state;
+    final previous = _backend;
+    _backend = next is SignedIn ? next.backend : null;
     state = next;
-    _closeBackend(previous);
-  }
-
-  static void _closeBackend(SessionState state) {
-    if (state is SignedIn) state.backend.close();
+    if (!identical(previous, _backend)) previous?.close();
   }
 }
