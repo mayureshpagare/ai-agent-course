@@ -30,6 +30,10 @@ Security:
 
 The first time you use a port, the launcher asks for admin rights once, to allow that port through Windows Firewall (for Private networks only). If you decline, it prints the `New-NetFirewallRule` command to run yourself. If the phone still can't connect, check that your Wi-Fi is set to **Private** in Windows network settings.
 
+## Native mobile app
+
+[mobile/](mobile) has a Flutter app for Android and iOS that does everything the web app does, with a phone-first layout. It uses the same backend with no changes. Pair it by scanning the same QR code, or by typing the address and pasting the token. Setup, tests and troubleshooting are in [mobile/README.md](mobile/README.md).
+
 ## How it works
 
 ```

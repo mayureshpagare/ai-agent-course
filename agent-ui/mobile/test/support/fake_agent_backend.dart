@@ -136,6 +136,11 @@ class FakeAgentBackend implements AgentBackend {
   @override
   Stream<StreamEvent> sendMessage(String conversationId, String content) {
     _check('send:$conversationId:$content');
+    // Like app.py: the first message of a "New chat" becomes its title.
+    final chat = chats[conversationId];
+    if (chat != null && chat.title == 'New chat' && (history[conversationId]?.isEmpty ?? true)) {
+      chats[conversationId] = chat.copyWith(title: content.length <= 50 ? content : '${content.substring(0, 50)}…');
+    }
     history[conversationId]?.add(UserItem(content));
     turnCancelled = false;
     final controller = StreamController<StreamEvent>();

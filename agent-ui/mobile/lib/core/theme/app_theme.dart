@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'tokens.dart';
 
@@ -54,6 +55,8 @@ ThemeData buildTheme(Brightness brightness) {
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: true,
+      // Dark status-bar icons on the light background, light ones in dark mode.
+      systemOverlayStyle: brightness == Brightness.light ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light,
     ),
     drawerTheme: DrawerThemeData(backgroundColor: p.drawer, surfaceTintColor: Colors.transparent),
     bottomSheetTheme: BottomSheetThemeData(
