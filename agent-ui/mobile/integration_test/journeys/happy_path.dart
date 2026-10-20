@@ -88,11 +88,11 @@ Future<void> runHappyPath(WidgetTester tester) async {
   await tester.tap(find.byKey(const Key('rename-save')));
   await tester.pumpAndSettle();
   expect(find.descendant(of: find.byType(Drawer), matching: find.text('Notes clean-up')), findsOneWidget);
-
-  // 8. Delete it, after confirming.
-  await tester.longPress(find.descendant(of: find.byType(Drawer), matching: find.text('Notes clean-up')));
-  await tester.pumpAndSettle();
-  await tester.tap(find.text('Delete'));
+  // 8. Delete it by swiping (rename above used long-press), after confirming.
+  await tester.drag(
+    find.descendant(of: find.byType(Drawer), matching: find.text('Notes clean-up')),
+    const Offset(-500, 0),
+  );
   await tester.pumpAndSettle();
   await tester.tap(find.byKey(const Key('confirm-delete')));
   await tester.pumpAndSettle();
