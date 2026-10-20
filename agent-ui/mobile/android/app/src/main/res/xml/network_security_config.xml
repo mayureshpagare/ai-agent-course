@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Allows plain HTTP (cleartext) traffic.
+
+  Why: the Agent UI backend runs on a computer on your Wi-Fi and is reached at
+  whatever LAN or Tailscale IP address it has (192.168.x.x, 10.x.x.x, 100.x.y.z).
+  Android's <domain> rules can't match arbitrary IP ranges, so cleartext has to be
+  permitted app-wide. Only use the app on networks you trust, as the README says.
+
+  TODO(https-only): remove this file and the android:networkSecurityConfig attribute
+  in AndroidManifest.xml once the app talks to a hosted HTTPS backend
+  (see docs/FUTURE_REMOTE.md).
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

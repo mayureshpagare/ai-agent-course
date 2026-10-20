@@ -11,6 +11,7 @@ from csv_tools import (
     count_by_column,
     summarize_numeric_column,
     summarize_by_group,
+    count_by_column_filtered,
 )
 
 TOOLS = [
@@ -22,6 +23,7 @@ TOOLS = [
     count_by_column,
     summarize_numeric_column,
     summarize_by_group,
+    count_by_column_filtered,
 ]
 
 TOOL_REGISTRY = {

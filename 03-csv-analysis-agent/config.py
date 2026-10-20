@@ -19,4 +19,5 @@ Rules:
 9. If the user asks for totals, averages, minimums or maximums,
    use numeric summary tools.
 10. You may call multiple tools when needed.
+11. If user has not specified a CSV file, analyze the available CSV files to determine the most relevant one.
 """
