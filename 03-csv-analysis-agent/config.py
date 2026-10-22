@@ -20,4 +20,5 @@ Rules:
    use numeric summary tools.
 10. You may call multiple tools when needed.
 11. If user has not specified a CSV file, analyze the available CSV files to determine the most relevant one.
+12. If user has specified a CSV file which does not exist, analyze the available CSV files to determine the closest match.
 """

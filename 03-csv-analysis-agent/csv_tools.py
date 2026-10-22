@@ -13,12 +13,18 @@ def load_csv(file_name: str) -> pd.DataFrame:
     Returns:
         pd.DataFrame: The loaded DataFrame.
     """
-    file_path = DATA_DIRECTORY / file_name
+    data_directory = DATA_DIRECTORY.resolve()
+
+    file_path = (data_directory / file_name).resolve()
+
+    if data_directory not in file_path.parents:
+        raise ValueError("File access outside the data directory is not allowed.")
+
     if not file_path.exists():
-        raise FileNotFoundError(f"The file {file_name} does not exist in the data directory.")
+        raise FileNotFoundError(f"File not found: {file_path}")
 
     if file_path.suffix.lower() != ".csv":
-        raise ValueError("Only CSV files are supported. Please provide a valid CSV file.")
+        raise ValueError("Only CSV files are allowed.")
 
     return pd.read_csv(file_path)
 
@@ -481,3 +487,81 @@ def count_by_column_filtered(
     )
 
     return counts
+
+def list_csv_files() -> list[str]:
+    """
+    List all CSV files in the data directory.
+
+    Returns:
+        A list of CSV file names.
+    """
+    DATA_DIRECTORY.mkdir(exist_ok=True)  # Ensure the data directory exists
+
+    return [path.name for path in DATA_DIRECTORY.glob("*.csv")]
+
+def sort_rows(file_name: str, column: str, ascending: bool = True, limit: int = 20) -> list[dict]:
+    """
+    Sort rows in a CSV file based on a specific column.
+
+    Args:
+        file_name (str): The name of the CSV file to sort.
+        column (str): The column name to sort by.
+        ascending (bool): Whether to sort in ascending order. Default is True.
+        limit (int): The maximum number of rows to return. Default is 20.
+
+    Returns:
+        Sorted Rows.
+    """
+    df = load_csv(file_name)
+    df = df.sort_values(by=column, ascending=ascending)
+    return df.head(min(limit, 50)).to_dict(orient="records")
+
+def filter_rows_multi(
+    file_name: str,
+    filters: dict,
+    limit: int = 20
+) -> list[dict]:
+    """
+    Filter rows in a CSV file based on multiple column values.
+
+    Args:
+        file_name (str): The name of the CSV file to query.
+        filters (dict): A dictionary where keys are column names and values are the values to filter by.
+        limit (int): The maximum number of rows to return. Default is 20.
+
+    Returns:
+        Matching Rows.
+    """
+    df = load_csv(file_name)
+
+    for column, value in filters.items():
+        if column not in df.columns:
+            raise ValueError(f"The column '{column}' does not exist in the CSV file.")
+
+        df = df[df[column].astype(str).str.lower() == str(value).lower()]
+
+    return df.head(min(limit, 50)).to_dict(orient="records")
+
+def select_columns(
+    file_name,
+    columns,
+    limit=20
+) -> list[dict]:
+    """
+    Select specific columns from a CSV file.
+
+    Args:
+        file_name (str): The name of the CSV file to query.
+        columns (list): A list of column names to select.
+        limit (int): The maximum number of rows to return. Default is 20.
+    
+    Returns:
+        Rows with only the selected columns.
+    """
+    df = load_csv(file_name)
+
+    for column in columns:
+        if column not in df.columns:
+            raise ValueError(f"The column '{column}' does not exist in the CSV file")
+
+        return df[columns].head(min(limit, 50)).to_dict(orient="records")

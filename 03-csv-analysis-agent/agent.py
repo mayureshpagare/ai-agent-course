@@ -12,6 +12,10 @@ from csv_tools import (
     summarize_numeric_column,
     summarize_by_group,
     count_by_column_filtered,
+    list_csv_files,
+    sort_rows,
+    filter_rows_multi,
+    select_columns, 
 )
 
 TOOLS = [
@@ -24,6 +28,10 @@ TOOLS = [
     summarize_numeric_column,
     summarize_by_group,
     count_by_column_filtered,
+    list_csv_files,
+    sort_rows,
+    filter_rows_multi,
+    select_columns,
 ]
 
 TOOL_REGISTRY = {
