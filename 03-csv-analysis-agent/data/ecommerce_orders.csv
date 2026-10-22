@@ -1,0 +1,9 @@
+order_id,customer_name,region,category,order_value,status,notes
+1001,Aarav Patel,West,Electronics,45000,Delivered,Express shipping requested
+1002,Priya Nair,South,Apparel,3200,Cancelled,Customer changed mind
+1003,Rohan Mehta,North,Electronics,62000,Delivered,Fragile item handle with care
+1004,Sneha Gupta,West,Home,12500,Delivered,Left at front door
+1005,Vikram Singh,North,Electronics,18000,Returned,Defective screen reported
+1006,Ananya Rao,South,Electronics,54000,Delivered,Corporate bulk order
+1007,Kabir Verma,East,Apparel,4800,Delivered,Gift wrapped
+1008,Neha Sharma,West,Home,21000,Pending,Delayed due to weather

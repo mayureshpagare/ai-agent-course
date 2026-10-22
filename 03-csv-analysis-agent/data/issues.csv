@@ -1,0 +1,13 @@
+issue_key,module,kind,title,status,priority,changes_required,estimated_hours
+DRT-101,billing,bug,Payment fails for yearly plan,Open,High,True,5
+DRT-102,profile,bug,Profile image alignment issue,Done,Low,False,2
+DRT-103,nutrition,feature,Add meal template filters,Open,Medium,True,8
+DRT-104,billing,bug,Invoice total incorrect,Open,Critical,True,6
+DRT-105,appointments,bug,Doctor cannot book appointment,Open,High,True,10
+DRT-106,nutrition,bug,Macro values not carried forward,Done,Medium,False,3
+DRT-107,profile,feature,Add address management,Open,Medium,True,7
+DRT-108,nutrition,bug,Calories mismatch warning missing,Open,High,True,4
+DRT-109,appointments,feature,Add reschedule flow,Done,Low,False,3
+DRT-110,billing,feature,Add refund support,Open,Medium,True,12
+DRT-111,security,bug,Expired session remains active,Open,Critical,True,9
+DRT-112,nutrition,bug,Water target reset issue,Open,Medium,True,5
