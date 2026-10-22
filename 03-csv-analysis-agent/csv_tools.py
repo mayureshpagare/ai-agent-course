@@ -543,9 +543,9 @@ def filter_rows_multi(
     return df.head(min(limit, 50)).to_dict(orient="records")
 
 def select_columns(
-    file_name,
-    columns,
-    limit=20
+    file_name: str,
+    columns: list[str],
+    limit: int = 20
 ) -> list[dict]:
     """
     Select specific columns from a CSV file.
@@ -560,8 +560,11 @@ def select_columns(
     """
     df = load_csv(file_name)
 
+    if not columns:
+        raise ValueError("Please provide at least one column name.")
+
     for column in columns:
         if column not in df.columns:
             raise ValueError(f"The column '{column}' does not exist in the CSV file")
 
-        return df[columns].head(min(limit, 50)).to_dict(orient="records")
+    return df[columns].head(min(limit, 50)).to_dict(orient="records")
