@@ -568,3 +568,39 @@ def select_columns(
             raise ValueError(f"The column '{column}' does not exist in the CSV file")
 
     return df[columns].head(min(limit, 50)).to_dict(orient="records")
+
+def get_unique_values(file_name:str, column:str) -> list:
+    """
+    Get unique values from a specific column in a CSV file.
+
+    Args:
+        file_name (str): The name of the CSV file to query.
+        column (str): The column name to get unique values from.
+
+    Returns:
+        A list of unique values in the specified column.
+    """
+    df = load_csv(file_name)
+
+    if column not in df.columns:
+        raise ValueError(f"The column '{column}' does not exist in the CSV file.")
+
+    unique_values = df[column].dropna().unique()
+
+    return unique_values.tolist()
+
+def analyse_missing_values(file_name:str) -> dict:
+    """
+    Analyze missing values in a CSV file.
+
+    Args:
+        file_name (str): The name of the CSV file to analyze.
+
+    Returns:
+        A dictionary with the count of missing values for each column.
+    """
+    df = load_csv(file_name)
+
+    # int() turns numpy's int64 counts into plain numbers the model can read.
+    return {column: int(count) for column, count in df.isnull().sum().items()}
+

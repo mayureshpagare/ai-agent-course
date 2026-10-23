@@ -15,7 +15,9 @@ from csv_tools import (
     list_csv_files,
     sort_rows,
     filter_rows_multi,
-    select_columns, 
+    select_columns,
+    get_unique_values,
+    analyse_missing_values
 )
 
 TOOLS = [
@@ -32,6 +34,8 @@ TOOLS = [
     sort_rows,
     filter_rows_multi,
     select_columns,
+    get_unique_values,
+    analyse_missing_values
 ]
 
 TOOL_REGISTRY = {
