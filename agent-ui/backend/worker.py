@@ -69,10 +69,11 @@ def run_chat(entry, messages):
     tools = list(entry.TOOLS)
     registry = {tool.__name__: tool for tool in tools}
     confirmations = getattr(entry, "CONFIRMATION_REQUIRED", {}) or {}
+    options = getattr(entry, "OPTIONS", None)
     new_messages = []
 
     for _ in range(MAX_TOOL_ROUNDS):
-        response = chat(model=entry.MODEL, messages=messages, tools=tools)
+        response = chat(model=entry.MODEL, messages=messages, tools=tools, options=options)
         message = response.message.model_dump(exclude_none=True)
         messages.append(message)
         new_messages.append(message)
