@@ -1,6 +1,6 @@
 from ollama import chat
 
-from config import MODEL, SYSTEM_PROMPT
+from config import MODEL, OPTIONS, SYSTEM_PROMPT
 
 from csv_tools import (
     inspect_csv,
@@ -48,7 +48,8 @@ def run_agent(messages:list[dict]) -> str:
         response = chat(
             model=MODEL,
             messages=messages,
-            tools=TOOLS
+            tools=TOOLS,
+            options=OPTIONS
         )
 
         messages.append(response.message)
