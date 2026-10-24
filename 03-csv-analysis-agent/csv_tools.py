@@ -365,6 +365,8 @@ def summarize_numeric_column(
         "average": float(numeric.mean()),
         "minimum": float(numeric.min()),
         "maximum": float(numeric.max()),
+        "median": float(numeric.median()),
+        "standard_deviation": float(numeric.std())
     }
 
 def summarize_by_group(
@@ -540,6 +542,12 @@ def filter_rows_multi(
 
         df = df[df[column].astype(str).str.lower() == str(value).lower()]
 
+    return {
+        "Total matching rows": len(df),
+        "Returned Rows": min(limit, 50),
+        "Rows": df.head(min(limit, 50)).to_dict(orient="records")
+    }
+    
     return df.head(min(limit, 50)).to_dict(orient="records")
 
 def select_columns(
@@ -604,3 +612,28 @@ def analyse_missing_values(file_name:str) -> dict:
     # int() turns numpy's int64 counts into plain numbers the model can read.
     return {column: int(count) for column, count in df.isnull().sum().items()}
 
+def export_filtered_csv( file_name: str, output_file_name: str, column: str, value: str) -> str:
+    """ 
+    Filter rows in a CSV file based on a specific column value and export the result to a new CSV file.
+
+    Args:
+        file_name (str): The name of the CSV file to query.
+        output_file_name (str): The name of the output CSV file.
+        column (str): The column name to filter by.
+        value (str): The value that should match.
+
+    Returns:
+        The path to the exported CSV file.
+    """
+    df = load_csv(file_name)
+
+    if column not in df.columns:
+        raise ValueError(f"The column '{column}' does not exist in the CSV file.")
+
+    series = df[column].astype(str)  # Convert the column to string for comparison
+
+    df_filtered = df[series == value]
+
+    output_path = DATA_DIRECTORY / output_file_name
+    df_filtered.to_csv(output_path, index=False)
+    return str(output_path)
