@@ -12,3 +12,4 @@ __pycache__/
 # Agent UI frontend
 node_modules/
 dist/
+test1.py
