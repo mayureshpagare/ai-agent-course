@@ -1,6 +1,6 @@
 from ollama import chat
 
-from config import MODEL, SYSTEM_PROMPT
+from config import MODEL, OPTIONS, SYSTEM_PROMPT
 
 from csv_tools import (
     inspect_csv,
@@ -12,6 +12,12 @@ from csv_tools import (
     summarize_numeric_column,
     summarize_by_group,
     count_by_column_filtered,
+    list_csv_files,
+    sort_rows,
+    filter_rows_multi,
+    select_columns,
+    get_unique_values,
+    analyse_missing_values
 )
 
 TOOLS = [
@@ -24,6 +30,12 @@ TOOLS = [
     summarize_numeric_column,
     summarize_by_group,
     count_by_column_filtered,
+    list_csv_files,
+    sort_rows,
+    filter_rows_multi,
+    select_columns,
+    get_unique_values,
+    analyse_missing_values
 ]
 
 TOOL_REGISTRY = {
@@ -36,7 +48,8 @@ def run_agent(messages:list[dict]) -> str:
         response = chat(
             model=MODEL,
             messages=messages,
-            tools=TOOLS
+            tools=TOOLS,
+            options=OPTIONS
         )
 
         messages.append(response.message)
@@ -50,23 +63,19 @@ def run_agent(messages:list[dict]) -> str:
             print(f"Calling tool: {tool_name} with arguments: {arguements}")
             tool = TOOL_REGISTRY.get(tool_name)
 
+            # Every call gets its own result, and errors go back as the tool's
+            # result so the model can read them and correct its next call.
             if tool is None:
-                messages.append({
-                    "role": "assistant",
-                    "content": f"Error: Tool '{tool_name}' not found."
-                })
-                
+                result = f"Error: Tool '{tool_name}' not found."
             else:
                 try:
-                    result= tool(**arguements)
+                    result = tool(**arguements)
                 except Exception as error:
-                    messages.append({
-                        "role": "assistant",
-                        "content": f"Error: Tool '{tool_name}' failed with error: {error}"
-                    })
+                    result = f"Error: Tool '{tool_name}' failed with error: {error}"
+
             print(f"Tool result: {result}")
             messages.append({
                 "role": "tool",
-                "name": tool_name,
+                "tool_name": tool_name,
                 "content": str(result)
             })

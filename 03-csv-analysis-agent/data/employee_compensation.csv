@@ -1,0 +1,7 @@
+emp_id,name,department,role_level,salary_inr,bonus_inr,attrition_risk
+E01,Siddharth Roy,Engineering,Senior,2400000,300000,Low
+E02,Meera Krishnan,Engineering,Mid,1600000,150000,High
+E03,Aditya Joshi,Sales,Senior,1800000,450000,Low
+E04,Kavita Desai,Sales,Junior,900000,100000,Medium
+E05,Farhan Khan,Engineering,Junior,1100000,80000,High
+E06,Tanya Bhatia,HR,Mid,1200000,90000,Low

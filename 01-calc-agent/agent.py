@@ -5,7 +5,7 @@ import inspect
 from ollama import chat
 
 import tools
-from config import MAX_TOOL_ROUNDS, MODEL
+from config import MAX_TOOL_ROUNDS, MODEL, OPTIONS
 
 
 # Register every function defined in tools.py, in the order it appears there,
@@ -50,6 +50,7 @@ def run_agent(messages: list) -> str:
             model=MODEL,
             messages=messages,
             tools=AVAILABLE_TOOLS,
+            options=OPTIONS,
         )
         messages.append(response.message)
 

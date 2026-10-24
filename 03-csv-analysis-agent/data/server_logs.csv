@@ -1,0 +1,8 @@
+log_id,timestamp,service,severity,response_time_ms,error_message
+501,2026-10-18T10:01:00Z,auth-service,INFO,45,User login successful
+502,2026-10-18T10:02:15Z,payment-gateway,ERROR,5020,Connection timeout to bank API
+503,2026-10-18T10:03:00Z,inventory-db,WARN,850,High memory utilization detected
+504,2026-10-18T10:04:20Z,payment-gateway,ERROR,4980,Connection timeout to bank API
+505,2026-10-18T10:05:10Z,auth-service,INFO,55,Token refreshed
+506,2026-10-18T10:06:00Z,search-engine,ERROR,1200,NullPointerException in query parser
+507,2026-10-18T10:07:30Z,auth-service,WARN,620,Rate limit approaching for IP

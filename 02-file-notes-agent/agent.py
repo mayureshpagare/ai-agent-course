@@ -2,7 +2,7 @@ import json
 
 from ollama import chat
 
-from config import MODEL
+from config import MODEL, OPTIONS
 
 from note_tools import (
     save_note,
@@ -70,6 +70,7 @@ def run_agent(messages):
             model=MODEL,
             messages=messages,
             tools=TOOLS,
+            options=OPTIONS,
         )
         messages.append(response.message)
 
