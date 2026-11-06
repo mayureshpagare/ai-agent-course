@@ -12,4 +12,7 @@ __pycache__/
 # Agent UI frontend
 node_modules/
 dist/
-test1.py
+
+# Scratch/test scripts in the repo root (agent folders are not affected)
+/*.py
+/*.pdf
